@@ -1,0 +1,99 @@
+---
+title: "Homework1_DavitOhanjanyan"
+author: "Davit Ohanjanyan"
+date: "2024-02-26"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(ggplot2)
+library(diffusion)
+```
+
+# Reusing Trash by UBQ
+
+For this homework, I chose an innovation, which is going to help with Reusing Trash by UBQ (time.com/collection/best-inventions-2023/6326972/ubq/). From the article of Times: “The company’s system sorts, shreds and then melts trash down into fibers, cellulose, and sugars for conversion into small pellets that can be used to make new products.”
+
+# Look-Alike Innovation
+
+The look-alike innovation from the past I chose is GFL Environmental Inc. By their words: “GFL Environmental is offering services in solid waste management, liquid waste management, and soil remediation” (gflenv.com).
+
+One of the reasons GFL Environmental Inc can be considered as a look-alike innovation for UBQ is that it is a relatively new company too. GFL Environmental Inc. was founded in 2007, and in 2011 it started to expend. In case of old companies – we don’t know how they started or how the world felt about recycling at that time, but in this case – we know that it would be fairer because both companies are in the modern world.
+
+Another reason that these companies are look-alikes is that operate in the same sphere – recycling. The both companies are on the mission to reduce the trash in the world. The difference is GFL Environmental offers different waste management services, and UBQ only creates materials that are reusable and replace plastic. Nevertheless, both companies want to reduce the garbage – one with the help of recycling it, and the other – with making a substitute product.
+
+For the homework, I will use information about the revenue of GFL Environmental in last seven years:  
+2016: 934 M CAD$  
+2017: 1330 M CAD $  
+2018: 1853 M CAD $  
+2019: 3347 M CAD $  
+2020: 4196 M CAD $  
+2021: 5137 M CAD $  
+2022: 6761 M CAD $  
+Market Potential: 17890 M CAD$
+
+Here we can see how our data looks like:
+```{r data}
+years <- c(2016, 2017, 2018, 2019, 2020, 2021, 2022)
+revenue <- c(934, 1330, 1853, 3347, 4196, 5137, 6761)
+data <- data.frame(year = years, revenue = revenue)
+ggplot(data = data, aes(x = year, y = revenue)) +
+  geom_bar(stat = 'identity') +
+  ggtitle('Revenue through years')
+```
+Now we include the equations for the Bass Model.
+```{r Bass model}
+t = 1:length(revenue)
+bass_m = nls(revenue ~ m*(((p+q)^2/p)*exp(-(p+q)*t))/
+               (1+(q/p)*exp(-(p+q)*t))^2,
+             start=c(list(m=sum(revenue),p=0.02,q=0.4)))
+```
+Now we use the library diffusion to make predictions about p, q and m.
+```{r diffusion}
+diff_m = diffusion(revenue)
+p=round(diff_m$w,4)[1]
+q=round(diff_m$w,4)[2]
+m=round(diff_m$w,4)[3]
+diff_m
+```
+So, using the look-alike innovation, we can have an assumption about or innovation. That is: p = 0.0119, q = 0.4558, m = 60022. Now let's do predictions:
+
+```{r predictions}
+m <- 60022
+p <- 0.0119
+q <- 0.4558
+
+bass_predictions <- function(t, m, p, q) {
+  m * (((p + q)^2 / p) * exp(-(p + q) * t)) / ((1 + (q / p) * exp(-(p + q) * t))^2)
+}
+
+first_year <- 2024
+
+num_years <- 5
+predicted_adopters <- sapply(first_year:(first_year + num_years - 1), 
+                             function(year) bass_predictions(year - first_year, m, p, q))
+print(predicted_adopters)
+```
+
+Now, we can use another approach, where market potential is 17890, as it is predicted for our look-alike product, and let's see what difference would it make.
+
+```{r predictions real}
+m <- 17890
+p <- 0.0119
+q <- 0.4558
+
+bass_predictions <- function(t, m, p, q) {
+  m * (((p + q)^2 / p) * exp(-(p + q) * t)) / ((1 + (q / p) * exp(-(p + q) * t))^2)
+}
+
+first_year <- 2024
+
+num_years <- 5
+predicted_adopters <- sapply(first_year:(first_year + num_years - 1), 
+                             function(year) bass_predictions(year - first_year, m, p, q))
+print(predicted_adopters)
+```
+
+So, we can see that we got almost 3 times less predictions for our company!
